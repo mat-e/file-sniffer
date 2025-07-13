@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Process Popup Modal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 0;
+      background: #f4f4f4;
+      margin: 0;
+    }
+    header {
+      text-align: center;
+      padding: 30px 0 10px;
+      background-color: #ffffff;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #333;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 600px;
+      margin: 30px auto 40px;
+      padding: 0 20px;
+    }
+    .textarea-group {
+      border: 2px solid #ccc;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: white;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border-radius: 5px;
+      border: 1px solid #888;
+      resize: vertical;
+      font-family: monospace;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+    textarea[readonly] {
+      background-color: #e9ecef;
+      cursor: not-allowed;
+    }
+    .button-group {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button, .file-label {
+      padding: 8px 16px;
+      border-radius: 5px;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-weight: bold;
+    }
+    .file-label {
+      background-color: #6c757d;
+    }
+    .file-label:hover {
+      background-color: #5a6268;
+    }
+    .alert-btn {
+      background-color: #007BFF;
+    }
+    .alert-btn:hover {
+      background-color: #0056b3;
+    }
+    .clear-btn {
+      background-color: #dc3545;
+    }
+    .clear-btn:hover {
+      background-color: #bd2130;
+    }
+    .middle-button,
+    .main-button {
+      align-self: center;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 5px;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .middle-button {
+      background-color: #ffc107;
+    }
+    .middle-button:hover {
+      background-color: #e0a800;
+    }
+    .main-button {
+      background-color: #28a745;
+    }
+    .main-button:hover {
+      background-color: #218838;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    /* Modal background */
+    .modal {
+      display: none; /* Hidden by default */
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    /* Modal content */
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 100%;
+      box-sizing: border-box;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    /* Editable textarea for modals */
+    .modal-editable-textarea {
+      width: 100%;
+      height: 80px;
+      padding: 8px;
+      box-sizing: border-box;
+      border-radius: 5px;
+      border: 1px solid #888;
+      resize: vertical;
+      font-family: monospace;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+    /* Confirmation input */
+    .confirm-input {
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #888;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    /* Modal buttons container */
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .modal-button {
+      padding: 8px 16px;
+      border-radius: 5px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      color: white;
+    }
+    .modal-button.close-btn {
+      background-color: #6c757d;
+    }
+    .modal-button.close-btn:hover {
+      background-color: #5a6268;
+    }
+    .modal-button.confirm-btn {
+      background-color: #28a745;
+    }
+    .modal-button.confirm-btn:disabled {
+      background-color: #94d3a2;
+      cursor: not-allowed;
+    }
+    .modal-button.confirm-btn:hover:enabled {
+      background-color: #218838;
+    }
+
+    /* Process modal textarea */
+    #processTextarea {
+      width: 100%;
+      height: 150px;
+      resize: none;
+      font-family: monospace;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #888;
+      background-color: #e9ecef;
+      cursor: not-allowed;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Your Logo Here</h1>
+</header>
+
+<div class="container">
+
+  <div class="textarea-group">
+    <textarea id="textarea1" placeholder="Load a file to display content here..." style="height: 200px;" readonly></textarea>
+    <div class="button-group">
+      <label class="file-label" for="file1">
+        Open File 1
+        <input id="file1" type="file" accept=".txt" onchange="loadFile(event, 1)">
+      </label>
+      <button class="alert-btn" onclick="showFromModal()">From</button>
+      <button class="clear-btn" onclick="showUntilModal()">Until</button>
+    </div>
+  </div>
+
+  <button class="middle-button" onclick="processText()">Process</button>
+
+  <div class="textarea-group">
+    <textarea id="textarea2" placeholder="Enter more text..." style="height: 100px;"></textarea>
+    <div class="button-group">
+      <label class="file-label" for="file2">
+        Open File 2
+        <input id="file2" type="file" accept=".txt" onchange="loadFile(event, 2)">
+      </label>
+      <button class="alert-btn" onclick="showAlertModal(2)">Alert Text 2</button>
+      <button class="clear-btn" onclick="showClearModal(2)">Clear Text 2</button>
+    </div>
+  </div>
+
+  <button class="main-button" onclick="addToNewFiles()">Add to New Files</button>
+</div>
+
+<!-- From Modal -->
+<div id="fromModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="fromTitle">
+  <div class="modal-content">
+    <h2 id="fromTitle">Edit "From" Text</h2>
+    <textarea id="fromTextarea" class="modal-editable-textarea" placeholder="Type your 'From' text here..."></textarea>
+    <div class="modal-buttons">
+      <button class="modal-button close-btn" onclick="closeFromModal()">Cancel</button>
+      <button class="modal-button confirm-btn" onclick="saveFromText()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Until Modal -->
+<div id="untilModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="untilTitle">
+  <div class="modal-content">
+    <h2 id="untilTitle">Edit "Until" Text</h2>
+    <textarea id="untilTextarea" class="modal-editable-textarea" placeholder="Type your 'Until' text here..."></textarea>
+    <div class="modal-buttons">
+      <button class="modal-button close-btn" onclick="closeUntilModal()">Cancel</button>
+      <button class="modal-button confirm-btn" onclick="saveUntilText()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Alert Modal (Read-only for bottom textarea) -->
+<div id="alertModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="alertTitle" aria-describedby="alertDesc">
+  <div class="modal-content">
+    <h2 id="alertTitle">Textarea Content</h2>
+    <textarea id="alertTextarea" class="modal-textarea" readonly></textarea>
+    <div class="modal-buttons">
+      <button class="modal-button close-btn" onclick="closeAlertModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Clear Confirmation Modal -->
+<div id="clearModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="clearTitle" aria-describedby="clearDesc">
+  <div class="modal-content">
+    <h2 id="clearTitle">Confirm Clear Text</h2>
+    <p id="clearDesc">Type <strong>CLEAR</strong> in the box below to confirm clearing the text.</p>
+    <input id="confirmInput" class="confirm-input" type="text" placeholder="Type CLEAR here" aria-describedby="clearDesc" />
+    <div class="modal-buttons">
+      <button class="modal-button close-btn" onclick="closeClearModal()">Cancel</button>
+      <button id="confirmClearBtn" class="modal-button confirm-btn" onclick="confirmClear()" disabled>Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Process Modal -->
+<div id="processModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="processTitle">
+  <div class="modal-content">
+    <h2 id="processTitle">Processed Text</h2>
+    <textarea id="processTextarea" readonly></textarea>
+    <div class="modal-buttons">
+      <button class="modal-button confirm-btn" onclick="confirmProcess()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Internal storage for "From" and "Until" modals (independent of textarea1)
+  let fromTextContent = '';
+  let untilTextContent = '';
+  let clearTarget = null;
+
+  // Load file into textarea
+  function loadFile(event, num) {
+    const reader = new FileReader();
+    reader.onload = function () {
+      document.getElementById(`textarea${num}`).value = reader.result;
+    };
+    reader.readAsText(event.target.files[0]);
+  }
+
+  // From Modal functions
+  function showFromModal() {
+    document.getElementById('fromTextarea').value = fromTextContent;
+    document.getElementById('fromModal').style.display = 'flex';
+    document.getElementById('fromTextarea').focus();
+  }
+  function closeFromModal() {
+    document.getElementById('fromModal').style.display = 'none';
+  }
+  function saveFromText() {
+    fromTextContent = document.getElementById('fromTextarea').value;
+    closeFromModal();
+  }
+
+  // Until Modal functions
+  function showUntilModal() {
+    document.getElementById('untilTextarea').value = untilTextContent;
+    document.getElementById('untilModal').style.display = 'flex';
+    document.getElementById('untilTextarea').focus();
+  }
+  function closeUntilModal() {
+    document.getElementById('untilModal').style.display = 'none';
+  }
+  function saveUntilText() {
+    untilTextContent = document.getElementById('untilTextarea').value;
+    closeUntilModal();
+  }
+
+  // Alert modal for bottom textarea
+  function showAlertModal(num) {
+    const content = document.getElementById(`textarea${num}`).value;
+    document.getElementById('alertTextarea').value = content || "(No content)";
+    document.getElementById('alertModal').style.display = 'flex';
+    document.getElementById('alertTextarea').focus();
+  }
+  function closeAlertModal() {
+    document.getElementById('alertModal').style.display = 'none';
+  }
+
+  // Clear Confirmation modal
+  function showClearModal(num) {
+    clearTarget = num;
+    document.getElementById('confirmInput').value = '';
+    document.getElementById('confirmClearBtn').disabled = true;
+    document.getElementById('clearModal').style.display = 'flex';
+    document.getElementById('confirmInput').focus();
+  }
+  function closeClearModal() {
+    document.getElementById('clearModal').style.display = 'none';
+    clearTarget = null;
+  }
+  document.getElementById('confirmInput').addEventListener('input', function () {
+    const val = this.value.trim();
+    document.getElementById('confirmClearBtn').disabled = val !== 'CLEAR';
+  });
+  function confirmClear() {
+    if (clearTarget) {
+      document.getElementById(`textarea${clearTarget}`).value = '';
+    }
+    closeClearModal();
+  }
+
+  // Process button: show modal with processed text
+  function processText() {
+    const text1 = document.getElementById('textarea1').value.trim();
+    const text2 = document.getElementById('textarea2').value.trim();
+    const processed = `--- Processed Output ---\n${text1}\n\n--- Separator ---\n${text2}`;
+    const modal = document.getElementById('processModal');
+    const processTextarea = document.getElementById('processTextarea');
+    processTextarea.value = processed;
+    modal.style.display = 'flex';
+    processTextarea.focus();
+  }
+
+  // Confirm button in process modal
+  function confirmProcess() {
+    alert('Processed text confirmed!');
+    document.getElementById('processModal').style.display = 'none';
+  }
+
+  // Add to new files button
+  function addToNewFiles() {
+    const text1 = document.getElementById('textarea1').value;
+    const text2 = document.getElementById('textarea2').value;
+    downloadTextFile(text1, 'text1-output.txt');
+    downloadTextFile(text2, 'text2-output.txt');
+  }
+  function downloadTextFile(content, filename) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const anchor = document.createElement('a');
+    anchor.href = URL.createObjectURL(blob);
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(anchor.href);
+  }
+
+  // Close modals on outside click
+  window.onclick = function(event) {
+    const modals = ['fromModal', 'untilModal', 'alertModal', 'clearModal', 'processModal'];
+    modals.forEach(id => {
+      const modal = document.getElementById(id);
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  };
+</script>
+
+</body>
+</html>
